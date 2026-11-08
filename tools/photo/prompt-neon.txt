@@ -1,0 +1,5 @@
+## positive
+Sci-fi 3D digital art, glowing hologram. A humpback whale constructed entirely from thousands of tiny bright blue and cyan particles: small luminous dots cover the whole body, a fine triangular wireframe mesh of thin lines connects the dots over the back and the flank, lines of glowing data run along the throat and the ventral grooves. Deep navy blue body made of particles, bright cyan-white rim light along the dorsal ridge, the small dorsal fin, the long pectoral flipper and the trailing edge of the flukes, one small glowing eye. The whale is drawn with light on a pure black background, surrounded by several faint wireframe cubes floating in the water and long thin light filaments flowing horizontally below the whale, soft bloom, volumetric glow. High detail, sharp glowing dots, electronic, bioluminescent, no text.
+
+## negative
+text, letters, numbers, watermark, logo, signature, frame, border, gray background, white background, flat illustration, cartoon, painting, photograph, realistic bumpy skin texture, duplicate whale, extra tail, extra flipper, deformed anatomy, blurry, low contrast

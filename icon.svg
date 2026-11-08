@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="aw-icon-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b2a44"/>
+      <stop offset="1" stop-color="#03070d"/>
+    </linearGradient>
+    <linearGradient id="aw-icon-whale" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9f7ff"/>
+      <stop offset="1" stop-color="#4fb9e0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="32" fill="url(#aw-icon-bg)"/>
+  <path d="M55 34 C54 29 50 26 45 25 C39 24 33 25 28 27 C24 28 20 30 17 32 C13 31 9 28 5 26 C8 30 10 33 11 34 C9 37 7 39 4 41 C9 41 14 39 18 38 C23 42 31 44 39 43 C45 42 50 40 53 37 C54 36 55 35 55 34 Z" fill="url(#aw-icon-whale)"/>
+  <path d="M55 34.6 C51 36.8 46 38 41 38.2" fill="none" stroke="#062032" stroke-opacity="0.55" stroke-width="1.2" stroke-linecap="round"/>
+  <circle cx="47.5" cy="31.4" r="1.3" fill="#062032"/>
+</svg>

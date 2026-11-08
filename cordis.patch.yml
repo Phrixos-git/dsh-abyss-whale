@@ -1,0 +1,5 @@
+# Abyss whale theme bundle patch.
+# Insert the client plugin row into the web composition.
+- insert:
+    - id: abyss-whale
+      name: '@local/dsh-abyss-whale'
