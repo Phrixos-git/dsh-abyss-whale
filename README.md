@@ -121,7 +121,7 @@ DeepSeek Harness（DSH）の Web GUI 用テーマです。深い青と漆黒の�
 | `WHALE_PHOTO_SVG` | 写真版の SVG（1200×560 の `<image>`。1440×672 の WebP を data URI で保持） |
 | `WHALE_SVG` | 線画版の大鯨の SVG（viewBox は 1200×560。輪郭1本＋内側のディテール＋胸びれ＋眼） |
 | `STYLES` | 装飾・アニメーション・設定行の CSS |
-| `MOTES` | 海雪の粒（位置 %、サイズ px、明滅の周期 s、ドリフト px） |
+| `MOTES` | 海雪の粒（位置 %、サイズ px、濃さ）。動きは `.aw-motes` の1本のドリフトで与える |
 
 - 鯨の形（寸法・比率）を変えたい場合は `tools/whale-profile.mjs` のランドマーク
   （`TOP_HEAD` / `FIN_SEGS` / `BOTTOM` / `FLUKE_TIP_UP` / `FLUKE_TIP_LO` / `FLUKE_NOTCH` /
@@ -137,8 +137,9 @@ DeepSeek Harness（DSH）の Web GUI 用テーマです。深い青と漆黒の�
   レイアウトは壊れません。
 - 鯨を消したい場合は `Atmosphere` から `.aw-whale` の要素を外すか、`STYLES` の
   `.aw-whale` に `display: none` を足します。
-- アニメーションを止めたい場合は `STYLES` の `@media (prefers-reduced-motion: reduce)` が
-  効きます（OS の設定で自動的に止まります）。
+- テーマで動いているのは海雪の層（`.aw-motes`）のゆっくりしたドリフトだけです（追記11）。
+  止めたい場合は `STYLES` の `@media (prefers-reduced-motion: reduce)` が効きます
+  （OS の設定で自動的に止まります）。
 
 ## 既知の制約
 
@@ -463,6 +464,51 @@ DeepSeek Harness（DSH）の Web GUI 用テーマです。深い青と漆黒の�
   合成プレビュー（1920／1440／1280／1024、`sim/render-*-*.png`）で構図とマスクを確認。
 - 写真版・粒子版・線画版はそのまま入っています。戻したいときは `WHALE_ART` を
   `'photo'` / `'lines'` / `'vector'` にするだけです。
+
+### 2026-11-09 追記11: アイドル時の CPU を下げる（光条と鯨のアニメーションを停止）
+
+- 依頼: 別セッションの計測で「DSH を開いたまま操作しないと CPU が 1 コア 100% 前後まで
+  上がる」現象の主因がこのテーマの背景アニメーションだと分かり、その引継ぎに沿って修正しました
+  （引継ぎの値: `.aw-sway` 約 72%、`.aw-drift` 約 22%、whale-chan-pet の `wc-bob` 約 8%、
+  cube-ui 約 1%）。
+- 変更（`client.js` のみ）:
+  - `.aw-shafts`: `animation: aw-sway ...` を削除。`filter: blur(26px)` を持つ層の
+    `transform` をアニメーションさせると、フレームごとに blur を焼き直すことになります。
+    38 秒で ±1.5% しか動かず、止めても見た目は変わりません。
+  - `.aw-whale`: `animation: aw-drift ...` を削除。`mask-image` 付きの最大 1900px の
+    ラスタを毎フレーム合成し直していました。170 秒で数 % のドリフトは知覚できません。
+  - どちらも `will-change: transform` も外しました（アニメーションが無いのに層を保持しない）。
+    `@keyframes aw-sway` / `@keyframes aw-drift` は削除。
+  - **海雪（`.aw-mote` 18 個）の個別アニメーションも廃止**しました。引継ぎでは約 2% と
+    見積もられていましたが、実測では 18 個の個別アニメーションが約 40% を占めていました
+    （1 フレームのコストはページ全体の再合成で決まるため、小さい要素でも数が効く）。
+    代わりに `.aw-motes`（海雪の層）に 96 秒の transform アニメーションを 1 本だけ置き、
+    粒の層ごとゆっくり漂わせています（約 3%）。`MOTES` からは `duration` / `delay` /
+    `drift` を削りました。
+  - なお `.aw-motes` の `opacity` アニメーションはオーバーレイ全体の塗り直しになるため
+    約 100% まで悪化しました（採用していません）。
+- 実測（1366×682、Firefox headless、GPU 無しのソフトウェア WebRender。この環境の値）:
+  - 修正前: アイドル **103.9%**（`aw-sway` 1・`aw-drift` 1・`aw-mote` 18・`cube-pulse` 1・`wc-bob` 1）
+  - 修正後: **14.5〜19.8%**（同一セッションで 3 回計測）
+  - 内訳: `* { animation: none }` で 1.2%、テーマの装飾を `display: none` にすると 9.8%
+    （＝cube-ui の `cube-pulse` と whale-chan-pet の `wc-bob` で約 10%）、`.aw-motes` の
+    ドリフトが約 3%。テーマ側でこれ以上削れるところはほぼありません。
+- 見た目: 鯨・光条の位置・濃さ・マスクは変えていません（静止するだけ）。前後で 1366×682 の
+  スクリーンショットを比べると平均輝度 19.05 → 19.21、平均差分 2.8/255
+  （アニメーションの位相の差を含む）。海雪は「粒ごとの明滅」から「層ごとのゆっくりした漂い」に
+  変わりました。
+- `prefers-reduced-motion: reduce` は、残った海雪のドリフトを止める指定に更新しました。
+- 確認: `node --check`、モジュール登録のスモークテスト、CSS の波括弧、
+  `document.getAnimations()` の棚卸し（`cube-pulse` / `aw-mote-drift` / `wc-bob` の 3 つだけ）、
+  4 つのアートワークが同じ CSS を使うこと（バリアントに関係なく効果あり）。
+- 再計測: 計測ツールはこのリポジトリの外の `creator/tmp/tools/cpu-probe.mjs` です。トークンは
+  `journalctl --user -u dsh-web.service --no-pager | grep -o "token=[A-Za-z0-9_-]\{20,\}"` で
+  取得し、`creator/` 直下から
+  `PHASES='[{"name":"idle","settleMs":2500,"measureMs":6000}]' node tmp/tools/cpu-probe.mjs "http://127.0.0.1:3080/?token=<TOKEN>"`
+  のように実行します。
+- 備考: GPU が有効なブラウザでは絶対値は下がりますが、`filter` + `transform` アニメーションと
+  巨大な `mask-image` が重いという傾向は同じです。残る約 10% は他プラグイン由来で、
+  このテーマの範囲外です。
 
 ## ファイル
 

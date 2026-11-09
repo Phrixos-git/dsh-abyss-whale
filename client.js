@@ -227,7 +227,11 @@ window.__ModuleLoader__.load({
   pointer-events: none;
 }
 
-/* Caustic light shafts filtering down from the surface. */
+/* Caustic light shafts filtering down from the surface.
+   Static on purpose: with a blur on the layer, animating its transform forces
+   the filter to be re-rasterised every frame, which measured about 72% of one
+   CPU core while the GUI sat idle. The old sway moved the gradient by only
+   +-1.5% over 38 seconds, so the still reads the same. */
 .aw-shafts {
   position: absolute;
   inset: -30% -15%;
@@ -239,13 +243,6 @@ window.__ModuleLoader__.load({
   );
   filter: blur(26px);
   opacity: 0.85;
-  will-change: transform;
-  animation: aw-sway 38s ease-in-out infinite alternate;
-}
-
-@keyframes aw-sway {
-  from { transform: translate3d(-1.5%, 0, 0) skewX(-1.2deg); }
-  to   { transform: translate3d(1.5%, 0, 0) skewX(1.2deg); }
 }
 
 /* Faint blue upwelling from the abyss below. */
@@ -263,7 +260,7 @@ window.__ModuleLoader__.load({
   );
 }
 
-/* The great whale gliding through the lower water.
+/* The great whale resting in the lower water.
    Width stays within the frame so head, eye, and flukes are never clipped;
    the mask keeps the back faint over the conversation and lets the lower
    body, which sits near the frame edge, stay brighter.
@@ -287,6 +284,10 @@ window.__ModuleLoader__.load({
      vector (tools/whale-profile.mjs): drawn bottom 415.3/1200 = 0.346 and
             the art starts at 27.7% of the element, so the top 18% is held
             clear and the mask is opaque from 64%.
+   The drift transform is gone too: moving the masked raster (up to 1900px
+   wide) re-composites the mask every frame for a few percent of movement over
+   170 seconds, which measured about 22% of one core at idle and cannot be
+   seen. The shafts are still as well; only the motes keep moving.
    top: 40% stays as the fallback for engines without min() inside calc(). */
 .aw-whale {
   position: absolute;
@@ -295,8 +296,6 @@ window.__ModuleLoader__.load({
   width: clamp(360px, 100vw, 1900px);
   transform: translateX(-50%);
   opacity: 0.72;
-  will-change: transform;
-  animation: aw-drift 170s ease-in-out infinite alternate;
 }
 
 /* photo, lines and neon share the 1200x560 canvas; lines is ink on
@@ -336,16 +335,24 @@ window.__ModuleLoader__.load({
   height: auto;
 }
 
-@keyframes aw-drift {
-  from { transform: translate3d(-52.5%, 1.5%, 0) rotate(-0.7deg); }
-  to   { transform: translate3d(-47.5%, -1%, 0) rotate(0.6deg); }
-}
-
-/* Marine snow: sparse luminous motes drifting in the water. */
+/* Marine snow: sparse luminous motes hanging in the water.
+   The drift is one slow transform on the wrapper instead of a bounce per
+   mote: a frame costs whatever the page has to recomposite, so eighteen
+   dots each running their own infinite animation measured about 40% of one
+   CPU core while the GUI sat idle, while the single wrapper drift costs
+   about 3%. An opacity animation on the wrapper is far worse still (about
+   100%) because the whole overlay is repainted, so the movement is a
+   transform, not a fade. */
 .aw-motes {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  animation: aw-mote-drift 96s ease-in-out infinite alternate;
+}
+
+@keyframes aw-mote-drift {
+  from { transform: translate3d(-5px, 0, 0); }
+  to   { transform: translate3d(5px, 3px, 0); }
 }
 
 .aw-mote {
@@ -353,15 +360,6 @@ window.__ModuleLoader__.load({
   border-radius: 50%;
   background: radial-gradient(circle, rgba(214, 248, 255, 0.95) 0%, rgba(150, 228, 255, 0.4) 45%, rgba(140, 220, 255, 0) 72%);
   pointer-events: none;
-  animation-name: aw-mote;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-}
-
-@keyframes aw-mote {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(6px, var(--aw-mote-drift, 22px), 0); }
 }
 
 /* Settings -> General: the theme's on/off row. */
@@ -466,9 +464,8 @@ window.__ModuleLoader__.load({
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .aw-shafts,
-  .aw-whale,
-  .aw-mote {
+  /* The shafts and the whale no longer animate; only the mote drift is left. */
+  .aw-motes {
     animation: none;
   }
   .aw-switch-track,
@@ -754,26 +751,27 @@ M1146 281Q1133 290.7 1120 292.4M1146 281Q1128.5 292.4 1111 295.7M1146 281Q1124 2
       : WHALE_NEON_SVG;
 
     // Marine snow. Positions are fixed so the field is stable across renders;
-    // each mote floats on its own slow, alternating drift.
+    // it drifts as one layer (see .aw-motes), so a mote only needs a place, a
+    // size and an opacity.
     const MOTES = [
-      { left: 4, top: 12, size: 2.4, opacity: 0.5, duration: 44, delay: -8, drift: 26 },
-      { left: 11, top: 64, size: 1.6, opacity: 0.34, duration: 61, delay: -23, drift: 18 },
-      { left: 18, top: 34, size: 3, opacity: 0.46, duration: 83, delay: -41, drift: 34 },
-      { left: 24, top: 81, size: 1.8, opacity: 0.28, duration: 52, delay: -15, drift: 22 },
-      { left: 31, top: 9, size: 1.5, opacity: 0.4, duration: 71, delay: -33, drift: 16 },
-      { left: 37, top: 57, size: 2.6, opacity: 0.44, duration: 57, delay: -6, drift: 28 },
-      { left: 43, top: 26, size: 1.8, opacity: 0.3, duration: 92, delay: -52, drift: 20 },
-      { left: 48, top: 88, size: 2.2, opacity: 0.36, duration: 66, delay: -19, drift: 30 },
-      { left: 55, top: 44, size: 1.5, opacity: 0.42, duration: 49, delay: -27, drift: 15 },
-      { left: 61, top: 17, size: 2.8, opacity: 0.5, duration: 78, delay: -44, drift: 36 },
-      { left: 67, top: 72, size: 1.7, opacity: 0.3, duration: 63, delay: -12, drift: 19 },
-      { left: 72, top: 39, size: 2.1, opacity: 0.38, duration: 86, delay: -37, drift: 27 },
-      { left: 78, top: 6, size: 1.6, opacity: 0.44, duration: 54, delay: -21, drift: 17 },
-      { left: 83, top: 61, size: 2.9, opacity: 0.48, duration: 96, delay: -57, drift: 32 },
-      { left: 88, top: 29, size: 1.9, opacity: 0.32, duration: 68, delay: -5, drift: 21 },
-      { left: 92, top: 84, size: 2.3, opacity: 0.4, duration: 74, delay: -39, drift: 25 },
-      { left: 96, top: 48, size: 1.5, opacity: 0.28, duration: 58, delay: -16, drift: 14 },
-      { left: 51, top: 67, size: 1.4, opacity: 0.24, duration: 105, delay: -63, drift: 12 },
+      { left: 4, top: 12, size: 2.4, opacity: 0.5 },
+      { left: 11, top: 64, size: 1.6, opacity: 0.34 },
+      { left: 18, top: 34, size: 3, opacity: 0.46 },
+      { left: 24, top: 81, size: 1.8, opacity: 0.28 },
+      { left: 31, top: 9, size: 1.5, opacity: 0.4 },
+      { left: 37, top: 57, size: 2.6, opacity: 0.44 },
+      { left: 43, top: 26, size: 1.8, opacity: 0.3 },
+      { left: 48, top: 88, size: 2.2, opacity: 0.36 },
+      { left: 55, top: 44, size: 1.5, opacity: 0.42 },
+      { left: 61, top: 17, size: 2.8, opacity: 0.5 },
+      { left: 67, top: 72, size: 1.7, opacity: 0.3 },
+      { left: 72, top: 39, size: 2.1, opacity: 0.38 },
+      { left: 78, top: 6, size: 1.6, opacity: 0.44 },
+      { left: 83, top: 61, size: 2.9, opacity: 0.48 },
+      { left: 88, top: 29, size: 1.9, opacity: 0.32 },
+      { left: 92, top: 84, size: 2.3, opacity: 0.4 },
+      { left: 96, top: 48, size: 1.5, opacity: 0.28 },
+      { left: 51, top: 67, size: 1.4, opacity: 0.24 },
     ];
 
     // ---------------------------------------------------------------------
@@ -870,9 +868,6 @@ M1146 281Q1133 290.7 1120 292.4M1146 281Q1128.5 292.4 1111 295.7M1146 281Q1124 2
                   width: mote.size + 'px',
                   height: mote.size + 'px',
                   opacity: mote.opacity,
-                  animationDuration: mote.duration + 's',
-                  animationDelay: mote.delay + 's',
-                  '--aw-mote-drift': mote.drift + 'px',
                 },
               }),
             ),
