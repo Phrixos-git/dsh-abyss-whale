@@ -288,14 +288,21 @@ window.__ModuleLoader__.load({
    wide) re-composites the mask every frame for a few percent of movement over
    170 seconds, which measured about 22% of one core at idle and cannot be
    seen. The shafts are still as well; only the motes keep moving.
-   top: 40% stays as the fallback for engines without min() inside calc(). */
+   top: 40% stays as the fallback for engines without min() inside calc().
+   The layer is held at 0.35 rather than the 0.72 the composition was tuned
+   with: the neon artwork's pectoral flipper is blown out to white, and at
+   0.72 that glare sat right behind the conversation column and the composer,
+   where the light labels (#e6f6ff) need a dark ground. Lowering the alpha
+   keeps the drawing as it is (the fin is still the brightest thing in the
+   frame) at about half the light; raise the value if the whale should be more
+   present, lower it for still more calm. */
 .aw-whale {
   position: absolute;
   left: 50%;
   top: 40%;
   width: clamp(360px, 100vw, 1900px);
   transform: translateX(-50%);
-  opacity: 0.72;
+  opacity: 0.35;
 }
 
 /* photo, lines and neon share the 1200x560 canvas; lines is ink on
