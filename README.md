@@ -156,19 +156,7 @@ DeepSeek Harness（DSH）の Web GUI 用テーマです。深い青と漆黒の�
 - コードブロックのシンタックスハイライト（Shiki）の色はダーク用の既定色のままです。
 - アイコンやブランドマークの差し替え（`ThemeDefinition.icons`）は行っていません。
 
-## 実地確認の結果（2026-11-08）
-
-- `plugin_manager` の `install_bundle` でインストール成功（`application: applied`、警告なし）。
-- プロファイル `web` の `package.json` に `@local/dsh-abyss-whale` が追加され、`dsh.profile.bundles` に登録。
-- Host 側のプラグイン行 `include:abyss-whale` が `enabled: true` / `fiberPhase: active`。
-- クライアント側のライブ登録を `cordis_inspect_query` で確認:
-  - `shell.overlay` に `abyss-whale-atmosphere`（order -1000）が出現
-  - `settings.general.item` に `abyss-whale`（order 13）が出現
-  - `Theme.listTokens` に本テーマの 108 個のトークンが出現（＝テーマ登録がライブ）
-- 未確認（この環境からブラウザの画面を操作・撮影できないため）:
-  - 実際の配色、鯨の見え方、スイッチの操作感の目視確認
-  - プラグイン管理画面でのタイトル・説明・アイコンの表示確認
-- 既に開いているページは **再読み込み** すると反映されます。
+## 変更履歴
 
 ### 2026-11-08 追記: 大鯨をリアルな比率に変更
 
